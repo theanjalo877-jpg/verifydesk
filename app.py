@@ -13,24 +13,26 @@ st.html("""
 }
 [data-testid="stMainBlockContainer"] {
     max-width: 100% !important;
-    padding: 3.5rem 0 0 !important;
+    padding: 0 !important;
 }
 [data-testid="stVerticalBlock"] { gap: 0 !important; }
 [data-testid="stElementContainer"]:has(iframe[title="VerifyDesk supplier change verification demo"]),
 [data-testid="stIframe"] {
-    height: calc(100dvh - 3.5rem) !important;
+    height: 100dvh !important;
     min-height: 480px;
 }
 iframe[title="VerifyDesk supplier change verification demo"] {
     display: block;
     width: 100% !important;
-    height: calc(100dvh - 3.5rem) !important;
+    height: 100dvh !important;
     min-height: 480px;
     border: 0 !important;
 }
+[data-testid="stHeader"] { display: none !important; }
 </style>
 """)
 # Only embed this fixed project asset; never use user-uploaded HTML here.
 st.iframe(Path(__file__).with_name("verifydesk.html"), height=1100,
           alt="VerifyDesk supplier change verification demo")
+
 
