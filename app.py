@@ -1,4 +1,5 @@
 """Full-width Streamlit host for the VerifyDesk demo."""
+from base64 import b64encode
 from pathlib import Path
 import streamlit as st
 
@@ -32,7 +33,10 @@ iframe[title="VerifyDesk supplier change verification demo"] {
 </style>
 """)
 # Only embed this fixed project asset; never use user-uploaded HTML here.
-st.iframe(Path(__file__).with_name("verifydesk.html"), height=1100,
-          alt="VerifyDesk supplier change verification demo")
+assets = Path(__file__).parent
+photo = b64encode((assets / "review-desk.webp").read_bytes()).decode("ascii")
+page = (assets / "verifydesk.html").read_text(encoding="utf-8")
+st.iframe(page.replace('src="review-desk.webp"', f'src="data:image/webp;base64,{photo}"', 1),
+          height=1100, alt="VerifyDesk supplier change verification demo")
 
 
