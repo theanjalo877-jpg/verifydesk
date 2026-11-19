@@ -19,11 +19,13 @@
 .desk-photo{position:absolute;inset:0 0 0 26%;width:74%;height:100%;object-fit:cover;object-position:center 56%;z-index:-1;animation:desk-settle 1.7s cubic-bezier(.2,.72,.25,1) both}
 @keyframes desk-settle{from{transform:scale(1.07);opacity:.52}to{transform:scale(1);opacity:1}}
 .masthead h1{font-size:clamp(48px,6.8vw,108px);letter-spacing:-.082em;line-height:1;margin:0;color:#f6f3e8}
-.word-v{color:#e1ebde;position:relative;display:inline-block;animation:letter-check .6s .56s ease-out both}
-.word-mark{position:absolute;width:.97em;height:.75em;top:.06em;left:-.09em;overflow:visible;pointer-events:none}
-.word-mark path{fill:none;stroke:#a4e4bc;stroke-width:5;stroke-dasharray:1;stroke-dashoffset:0;stroke-linecap:round;stroke-linejoin:round;animation:draw-check .62s .15s ease-out both;filter:drop-shadow(0 0 4px #a2e5b750)}
-@keyframes draw-check{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
-@keyframes letter-check{from{color:#f6f3e8}to{color:#7ab395}}
+.word-v{display:inline-block;vertical-align:baseline;width:.64em;height:.73em}
+.word-v svg{display:block;width:100%;height:100%;overflow:visible}
+.word-mark path{fill:currentColor;animation:letter-to-check 1.65s .2s ease-in-out}
+@keyframes letter-to-check{
+ 0%,100%{d:path("M1 1 L13 1 L32 57 L51 1 L63 1 L39 72 L25 72 Z");fill:currentColor}
+ 37%,62%{d:path("M1 36 L9 28 L25 44 L55 9 L63 16 L26 61 L19 54 Z");fill:#a4e4bc}
+}
 .masthead .project-credit{color:#e9efe4;font-size:10px;text-transform:uppercase;letter-spacing:.18em;margin:15px 0 13px;font-weight:680;animation:credit-in .75s .5s ease-out both}
 @keyframes credit-in{from{opacity:0;filter:blur(4px);transform:translateY(6px)}to{opacity:1;filter:none;transform:none}}
 .masthead .subtitle{color:#dce7df;margin:0;max-width:38ch}
@@ -69,7 +71,7 @@ document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b
 if(view==='directory'){directory();return}if(view==='about'){about();return}
 $('#main').innerHTML=`<div class="title masthead ${showIntro?'intro':''}">
 <img class="desk-photo" src="review-desk.webp" alt="">
-<div><h1 aria-label="VerifyDesk"><span aria-hidden="true" class="word-v">V<svg class="word-mark" viewBox="0 0 64 50"><path pathLength="1" d="M8 23l16 17L56 7"/></svg></span><span aria-hidden="true">erifyDesk</span></h1>
+<div><h1 aria-label="VerifyDesk"><span aria-hidden="true" class="word-v"><svg class="word-mark" viewBox="0 0 64 73"><path d="M1 1 L13 1 L32 57 L51 1 L63 1 L39 72 L25 72 Z"/></svg></span><span aria-hidden="true">erifyDesk</span></h1>
 <p class="project-credit">An Anjalo Theophine Wilson Project</p><p class="subtitle">Check supplier bank-detail changes before anyone pays.</p></div></div>
 <div class="inbox-actions"><strong>Verification inbox</strong><button class="primary" id="new">+ New request</button></div><div class="metrics">${['Needs verification','Awaiting approval','Approved','Rejected'].map(s=>`<button class="metric" data-status="${s}" aria-pressed="${filter===s}" title="Show ${s.toLowerCase()} requests"><span>${s}</span><strong>${String(requests.filter(r=>r.status===s).length).padStart(2,'0')}</strong><em>↗</em></button>`).join('')}</div><div class="insight"><div class="ring" style="--progress:${Math.round(requests.filter(r=>['Approved','Rejected'].includes(r.status)).length/requests.length*100)}%"><b>${requests.filter(r=>['Approved','Rejected'].includes(r.status)).length}/${requests.length}</b></div><div><h3>Review progress</h3><p>Closed demo requests. Every change starts with an independent check.</p></div><button class="secondary" id="learn">How it works ↗</button></div><div class="work"><section class="panel"><div class="paneltitle"><h3>Request inbox</h3><small>${requests.length} demo requests</small></div><div class="filters"><input id="search" aria-label="Search requests" placeholder="Search supplier or request…" value="${escape(query)}"><select id="filter" aria-label="Filter by status">${['All statuses','Needs verification','Awaiting approval','Approved','Rejected'].map(s=>`<option ${s===filter?'selected':''}>${s}</option>`).join('')}</select></div><div id="list"></div><div class="hint">A familiar sender address is not proof.<br>Always use the saved supplier contact.</div></section><section class="panel" id="detail" aria-label="Selected request"></section></div><div class="tools"><button class="secondary" id="export">↓ Export demo evidence</button><button class="secondary" id="reset">Reset scenarios</button></div>`;
 showIntro=false;
