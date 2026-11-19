@@ -4,14 +4,15 @@ Independent, AI-assisted cybersecurity portfolio prototype for Anjalo Theophine 
 
 ## Upload to GitHub
 
-Create a separate repository named `verifydesk`. Upload these four files into the repository root (top level):
+Create a separate repository named `verifydesk`. Upload these files into the repository root (top level):
 
 - app.py
 - requirements.txt
 - verifydesk.html
+- review-desk.webp
 - README.md
 
-Extract the ZIP first. Do not upload the ZIP itself or place the four files inside an extra folder. Public makes your source visible to everyone; Private keeps source restricted. This package contains fictional data and no credentials.
+Extract the ZIP first. Do not upload the ZIP itself or place the files inside an extra folder. Public makes your source visible to everyone; Private keeps source restricted. This package contains fictional data and no credentials.
 
 ## Deploy through Streamlit Community Cloud
 
