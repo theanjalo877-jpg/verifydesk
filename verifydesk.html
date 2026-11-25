@@ -60,6 +60,7 @@ return {...r,...update,events:[...r.events,{time:new Date().toISOString(),actor:
 function seed(){return [create({supplier:'cedar',email:'billing@cedar-payments.example',ending:'7812',urgent:true,message:'Please use the new bank account today. Our usual account is under review. Avoid calling the old number.'},'VR-1042'),create({supplier:'atlas',email:'accounts@atlas.example',ending:'4429',message:'We are changing our business bank account. Please confirm through your existing supplier contact.'},'VR-1041'),transition(create({supplier:'harbour',email:'finance@harbour.example',ending:'5531',message:'New account for the next billing cycle. No urgent payment is requested.'},'VR-1040'),'verify','alex','Simulated callback using DEMO-CONTACT-003 confirmed the proposed ending 5531.')];}
 
 let showIntro=true;
+let searchFrame=0;
 let requests=seed(),selected='VR-1042',view='inbox',role='alex',query='',filter='All statuses',next=1043;
 const $=s=>document.querySelector(s),escape=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const supplier=r=>suppliers.find(s=>s.id===r.supplier),badge=r=>`<span class="badge ${r.status.split(' ')[0].toLowerCase()}">${escape(r.status)}</span>`;
@@ -67,6 +68,7 @@ let toastTimer;
 function toast(s){clearTimeout(toastTimer);$('#toast').textContent=s;$('#toast').style.display='block';toastTimer=setTimeout(()=>$('#toast').style.display='none',3500)}
 function field(label,value){return`<div class="field"><small>${escape(label)}</small><strong>${escape(value)}</strong></div>`}
 function render(){
+cancelAnimationFrame(searchFrame);
 document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('#crumb').textContent={inbox:'Verification inbox',directory:'Supplier directory',about:'About this project'}[view];
 if(view==='directory'){directory();return}if(view==='about'){about();return}
 $('#main').innerHTML=`<div class="title masthead ${showIntro?'intro':''}">
@@ -75,7 +77,15 @@ $('#main').innerHTML=`<div class="title masthead ${showIntro?'intro':''}">
 <p class="project-credit">An Anjalo Theophine Wilson Project</p><p class="subtitle">Check supplier bank-detail changes before anyone pays.</p></div></div>
 <div class="inbox-actions"><strong>Verification inbox</strong><button class="primary" id="new">+ New request</button></div><div class="metrics">${['Needs verification','Awaiting approval','Approved','Rejected'].map(s=>`<button class="metric" data-status="${s}" aria-pressed="${filter===s}" title="Show ${s.toLowerCase()} requests"><span>${s}</span><strong>${String(requests.filter(r=>r.status===s).length).padStart(2,'0')}</strong><em>↗</em></button>`).join('')}</div><div class="insight"><div class="ring" style="--progress:${Math.round(requests.filter(r=>['Approved','Rejected'].includes(r.status)).length/requests.length*100)}%"><b>${requests.filter(r=>['Approved','Rejected'].includes(r.status)).length}/${requests.length}</b></div><div><h3>Review progress</h3><p>Closed demo requests. Every change starts with an independent check.</p></div><button class="secondary" id="learn">How it works ↗</button></div><div class="work"><section class="panel"><div class="paneltitle"><h3>Request inbox</h3><small>${requests.length} demo requests</small></div><div class="filters"><input id="search" aria-label="Search requests" placeholder="Search supplier or request…" value="${escape(query)}"><select id="filter" aria-label="Filter by status">${['All statuses','Needs verification','Awaiting approval','Approved','Rejected'].map(s=>`<option ${s===filter?'selected':''}>${s}</option>`).join('')}</select></div><div id="list"></div><div class="hint">A familiar sender address is not proof.<br>Always use the saved supplier contact.</div></section><section class="panel" id="detail" aria-label="Selected request"></section></div><div class="tools"><button class="secondary" id="export">↓ Export demo evidence</button><button class="secondary" id="reset">Reset scenarios</button></div>`;
 showIntro=false;
-$('#learn').onclick=()=>openGuide(0);document.querySelectorAll('[data-status]').forEach(b=>b.onclick=()=>{filter=filter===b.dataset.status?'All statuses':b.dataset.status;render()});$('#new').onclick=()=>{$('#form').reset();$('#form-error').textContent='';$('#dialog').showModal()};$('#search').oninput=e=>{query=e.target.value;list();detail()};$('#filter').onchange=e=>{filter=e.target.value;list();detail()};
+$('#learn').onclick=()=>openGuide(0);document.querySelectorAll('[data-status]').forEach(b=>b.onclick=()=>{filter=filter===b.dataset.status?'All statuses':b.dataset.status;render()});$('#new').onclick=()=>{$('#form').reset();$('#form-error').textContent='';$('#dialog').showModal()};$('#search').oninput=e=>{
+ query=e.target.value;
+ cancelAnimationFrame(searchFrame);
+ searchFrame=requestAnimationFrame(()=>{
+  const previous=selected;
+  list();
+  if(selected!==previous)detail();
+ });
+};$('#filter').onchange=e=>{filter=e.target.value;list();detail()};
 $('#reset').onclick=()=>{if(confirm('Reset all demo decisions and activity?')){requests=seed();selected='VR-1042';query='';filter='All statuses';next=1043;render();toast('Demo scenarios restored.')}};
 $('#export').onclick=()=>{const data={project:'VerifyDesk',disclaimer:'Fictional demo. Browser-editable activity log, not audit-grade evidence.',exportedAt:new Date().toISOString(),requests};const url=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download='verifydesk-demo-evidence.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);toast('Demo evidence exported.')};list();detail();animateProgress();}
 function list(){const rows=requests.filter(r=>(filter==='All statuses'||filter===r.status)&&(supplier(r).name+' '+r.id).toLowerCase().includes(query.trim().toLowerCase()));if(!rows.some(r=>r.id===selected))selected=rows[0]?.id??null;$('#list').innerHTML=rows.length?rows.map(r=>`<button class="request ${r.id===selected?'selected':''}" data-id="${r.id}" aria-pressed="${r.id===selected}"><div class="request-top"><small>${r.id}</small>${badge(r)}</div><strong>${escape(supplier(r).name)}</strong><p>Account ending ${supplier(r).ending} → ${r.ending}${r.urgent?' · Urgent':''}</p></button>`).join(''):'<div class="empty">No matching requests.<br>Try another search or status.</div>';$('#list').querySelectorAll('button').forEach(b=>b.onclick=()=>{selected=b.dataset.id;list();detail()})}
