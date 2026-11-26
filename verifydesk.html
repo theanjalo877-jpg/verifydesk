@@ -21,11 +21,7 @@
 .masthead h1{font-size:clamp(48px,6.8vw,108px);letter-spacing:-.082em;line-height:1;margin:0;color:#f6f3e8}
 .word-v{display:inline-block;vertical-align:baseline;width:.64em;height:.73em}
 .word-v svg{display:block;width:100%;height:100%;overflow:visible}
-.word-mark path{fill:currentColor;animation:letter-to-check 1.65s .2s ease-in-out}
-@keyframes letter-to-check{
- 0%,100%{d:path("M1 1 L13 1 L32 57 L51 1 L63 1 L39 72 L25 72 Z");fill:currentColor}
- 37%,62%{d:path("M1 36 L9 28 L25 44 L55 9 L63 16 L26 61 L19 54 Z");fill:#a4e4bc}
-}
+.word-mark path{fill:currentColor}
 .masthead .project-credit{color:#e9efe4;font-size:10px;text-transform:uppercase;letter-spacing:.18em;margin:15px 0 13px;font-weight:680;animation:credit-in .75s .5s ease-out both}
 @keyframes credit-in{from{opacity:0;filter:blur(4px);transform:translateY(6px)}to{opacity:1;filter:none;transform:none}}
 .masthead .subtitle{color:#dce7df;margin:0;max-width:38ch}
@@ -76,6 +72,7 @@ $('#main').innerHTML=`<div class="title masthead ${showIntro?'intro':''}">
 <div><h1 aria-label="VerifyDesk"><span aria-hidden="true" class="word-v"><svg class="word-mark" viewBox="0 0 64 73"><path d="M1 1 L13 1 L32 57 L51 1 L63 1 L39 72 L25 72 Z"/></svg></span><span aria-hidden="true">erifyDesk</span></h1>
 <p class="project-credit">An Anjalo Theophine Wilson Project</p><p class="subtitle">Check supplier bank-detail changes before anyone pays.</p></div></div>
 <div class="inbox-actions"><strong>Verification inbox</strong><button class="primary" id="new">+ New request</button></div><div class="metrics">${['Needs verification','Awaiting approval','Approved','Rejected'].map(s=>`<button class="metric" data-status="${s}" aria-pressed="${filter===s}" title="Show ${s.toLowerCase()} requests"><span>${s}</span><strong>${String(requests.filter(r=>r.status===s).length).padStart(2,'0')}</strong><em>↗</em></button>`).join('')}</div><div class="insight"><div class="ring" style="--progress:${Math.round(requests.filter(r=>['Approved','Rejected'].includes(r.status)).length/requests.length*100)}%"><b>${requests.filter(r=>['Approved','Rejected'].includes(r.status)).length}/${requests.length}</b></div><div><h3>Review progress</h3><p>Closed demo requests. Every change starts with an independent check.</p></div><button class="secondary" id="learn">How it works ↗</button></div><div class="work"><section class="panel"><div class="paneltitle"><h3>Request inbox</h3><small>${requests.length} demo requests</small></div><div class="filters"><input id="search" aria-label="Search requests" placeholder="Search supplier or request…" value="${escape(query)}"><select id="filter" aria-label="Filter by status">${['All statuses','Needs verification','Awaiting approval','Approved','Rejected'].map(s=>`<option ${s===filter?'selected':''}>${s}</option>`).join('')}</select></div><div id="list"></div><div class="hint">A familiar sender address is not proof.<br>Always use the saved supplier contact.</div></section><section class="panel" id="detail" aria-label="Selected request"></section></div><div class="tools"><button class="secondary" id="export">↓ Export demo evidence</button><button class="secondary" id="reset">Reset scenarios</button></div>`;
+if(showIntro)observeWordmark();
 showIntro=false;
 $('#learn').onclick=()=>openGuide(0);document.querySelectorAll('[data-status]').forEach(b=>b.onclick=()=>{filter=filter===b.dataset.status?'All statuses':b.dataset.status;render()});$('#new').onclick=()=>{$('#form').reset();$('#form-error').textContent='';$('#dialog').showModal()};$('#search').oninput=e=>{
  query=e.target.value;
@@ -110,6 +107,36 @@ function openGuide(step){const d=$('#guide');d.innerHTML=`<div class="dialogtitl
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
 let motionPaused=false,progressValue=0,progressFrame=0;
 function syncMotion(){document.body.classList.toggle('motion-off',motionPaused||reducedMotion.matches);for(const id of ['motion-toggle','mobile-motion-toggle']){const b=document.getElementById(id);b.textContent=reducedMotion.matches?'Reduced motion enabled':motionPaused?'Resume motion':'Pause motion';b.setAttribute('aria-pressed',String(motionPaused||reducedMotion.matches));b.disabled=reducedMotion.matches;}if(view==='inbox')animateProgress();}
+function observeWordmark(){
+ const mark=document.querySelector('.word-mark');
+ const path=mark.querySelector('path');
+ const letter=path.getAttribute('d');
+ const original=[1,1,13,1,32,57,51,1,63,1,39,72,25,72];
+ const check=[1,36,9,28,25,44,55,9,63,16,26,61,19,54];
+ const observer=new IntersectionObserver(([entry])=>{
+  if(!entry.isIntersecting||reducedMotion.matches||motionPaused)return;
+  observer.unobserve(mark);
+  const start=performance.now()+200;
+  function draw(now){
+   const progress=Math.min(1,Math.max(0,(now-start)/1650));
+   if(!mark.isConnected||motionPaused||reducedMotion.matches||progress===1){
+    path.setAttribute('d',letter);
+    path.style.removeProperty('fill');
+    return;
+   }
+   const phase=Math.min(1,progress/.37,(1-progress)/.38);
+   const mix=phase*phase*(3-2*phase);
+   const points=original.map((coordinate,i)=>coordinate+(check[i]-coordinate)*mix);
+   const shape=[];
+   for(let i=0;i<points.length;i+=2)shape.push(points[i].toFixed(2)+' '+points[i+1].toFixed(2));
+   path.setAttribute('d','M'+shape.join(' L')+' Z');
+   path.style.fill='rgb('+[246-82*mix,243-15*mix,232-44*mix].map(Math.round).join(',')+')';
+   requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+ },{threshold:.25});
+ observer.observe(mark);
+}
 function animateProgress(){cancelAnimationFrame(progressFrame);const ring=document.querySelector('.ring');if(!ring)return;const target=requests.filter(r=>['Approved','Rejected'].includes(r.status)).length/requests.length*100;const from=progressValue;if(motionPaused||reducedMotion.matches){progressValue=target;ring.style.setProperty('--progress',target+'%');return;}const started=performance.now();function tick(now){const t=Math.min((now-started)/650,1);progressValue=from+(target-from)*(1-Math.pow(1-t,3));ring.style.setProperty('--progress',progressValue+'%');if(t<1)progressFrame=requestAnimationFrame(tick);}ring.style.setProperty('--progress',from+'%');progressFrame=requestAnimationFrame(tick);}
 for(const id of ['motion-toggle','mobile-motion-toggle'])document.getElementById(id).onclick=()=>{motionPaused=!motionPaused;syncMotion();};reducedMotion.addEventListener('change',syncMotion);
 
